@@ -55,14 +55,22 @@ class BroadcastImageToDbEntityRepository extends ServiceEntityRepository
                 $imageResource = stream_get_contents($imageResource);
             }
 
-            $result[] =
-                new BroadcastImageResource(broadcastId: $image->getBroadcastId(),
-                    image: base64_encode(
-                        $imageResource),
-                );
+
+            if ($this->isValidJpeg($imageResource)) {
+                $result[] =
+                    new BroadcastImageResource(broadcastId: $image->getBroadcastId(),
+                        image: base64_encode(
+                            $imageResource),
+                    );
+            }
+
         }
 
         return $result;
     }
 
+    private function isValidJpeg(string $data): bool
+    {
+        return substr($data, 0, 3) === self::JPEG_MAGIC_BYTES[0];
+    }
 }

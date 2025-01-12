@@ -7,12 +7,10 @@ use App\Entity\BroadcastImageToFileEntity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<BroadcastImageToFileEntity>
- */
 class BroadcastImageToFileEntityRepository extends ServiceEntityRepository
 {
     private const IMAGE_DIRECTORY = '/Users/user/PhpstormProjects/bar_api/images';
+    private const JPEG_MAGIC_BYTES = ["\xFF\xD8\xFF"];
 
     public function __construct(ManagerRegistry $registry)
     {
@@ -23,7 +21,15 @@ class BroadcastImageToFileEntityRepository extends ServiceEntityRepository
     {
         $entityManager = $this->getEntityManager();
 
-        $decodedImage = base64_decode($base64Image);
+        $decodedImage = base64_decode($base64Image, true);
+        if ($decodedImage === false) {
+            throw new \InvalidArgumentException('Invalid base64 encoded image');
+        }
+
+        if (!$this->isValidJpeg($decodedImage)) {
+            throw new \InvalidArgumentException('Provided image is not a valid JPEG');
+        }
+
         $filename = uniqid('image_', true) . '.jpeg';
         $filePath = self::IMAGE_DIRECTORY . '/' . $filename;
 
@@ -41,6 +47,11 @@ class BroadcastImageToFileEntityRepository extends ServiceEntityRepository
         $entityManager->flush();
     }
 
+    private function isValidJpeg(string $data): bool
+    {
+        return substr($data, 0, 3) === self::JPEG_MAGIC_BYTES[0];
+    }
+
     public function removeExistingImages(int $broadcastId): void
     {
         $entityManager = $this->getEntityManager();
@@ -49,7 +60,6 @@ class BroadcastImageToFileEntityRepository extends ServiceEntityRepository
         if ($existingFileEntity) {
             $this->deleteFileAndEntity($existingFileEntity);
         }
-
 
         $entityManager->flush();
     }
@@ -64,7 +74,6 @@ class BroadcastImageToFileEntityRepository extends ServiceEntityRepository
         $this->getEntityManager()->remove($entity);
     }
 
-
     public function getAllImagesAsBase64(): array
     {
         $images = $this->findAll();
@@ -72,17 +81,24 @@ class BroadcastImageToFileEntityRepository extends ServiceEntityRepository
 
         foreach ($images as $image) {
             $filePath = $image->getFilePath();
-            if (!file_exists($filePath)) {
+
+            if (!$this->canAccessFile($filePath)) {
                 $this->getEntityManager()->remove($image);
                 $this->getEntityManager()->flush();
                 continue;
             }
 
-            $result[] =
-                new BroadcastImageResource(broadcastId: $image->getBroadcastId(),
-                    image: base64_encode(file_get_contents($filePath)));
+            $result[] = new BroadcastImageResource(
+                broadcastId: $image->getBroadcastId(),
+                image: base64_encode(file_get_contents($filePath)),
+            );
         }
 
         return $result;
+    }
+
+    private function canAccessFile(string $filePath): bool
+    {
+        return file_exists($filePath) && is_readable($filePath);
     }
 }
