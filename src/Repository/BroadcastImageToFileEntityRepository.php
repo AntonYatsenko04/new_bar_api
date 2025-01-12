@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\ApiResource\Broadcast\BroadcastImageResource;
 use App\Entity\BroadcastImageToFileEntity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -63,6 +64,7 @@ class BroadcastImageToFileEntityRepository extends ServiceEntityRepository
         $this->getEntityManager()->remove($entity);
     }
 
+
     public function getAllImagesAsBase64(): array
     {
         $images = $this->findAll();
@@ -71,19 +73,14 @@ class BroadcastImageToFileEntityRepository extends ServiceEntityRepository
         foreach ($images as $image) {
             $filePath = $image->getFilePath();
             if (!file_exists($filePath)) {
-                $result[] = [
-                    'id' => $image->getId(),
-                    'broadcastId' => $image->getBroadcastId(),
-                    'error' => 'File does not exist or path is corrupted',
-                ];
+                $this->getEntityManager()->remove($image);
+                $this->getEntityManager()->flush();
                 continue;
             }
 
-            $result[] = [
-                'id' => $image->getId(),
-                'broadcastId' => $image->getBroadcastId(),
-                'image' => base64_encode(file_get_contents($filePath)),
-            ];
+            $result[] =
+                new BroadcastImageResource(broadcastId: $image->getBroadcastId(),
+                    image: base64_encode(file_get_contents($filePath)));
         }
 
         return $result;

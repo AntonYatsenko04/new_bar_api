@@ -32,10 +32,10 @@ class BroadcastImageToDbStateProcessor implements ProcessorInterface
         if ($data instanceof BroadcastImageResource) {
             try {
                 $this->broadcastImageToDbEntityRepository->saveBase64Image
-                (broadcastId: $data->getId(), base64Image: $data->getImage());
-                $this->broadcastImageToFileEntityRepository->removeExistingImages($data->getId());
+                (broadcastId: $data->getBroadcastId(), base64Image: $data->getImage());
+                $this->broadcastImageToFileEntityRepository->removeExistingImages($data->getBroadcastId());
             } catch (Exception $exception) {
-                throw HttpException::fromStatusCode(500);
+                throw HttpException::fromStatusCode(500, $exception->getMessage());
             }
 
         }

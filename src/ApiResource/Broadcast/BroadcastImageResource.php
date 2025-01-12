@@ -5,6 +5,7 @@ namespace App\ApiResource\Broadcast;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
+use App\State\BroadcastImageStateProvider;
 use App\State\BroadcastImageToDbStateProcessor;
 use App\State\BroadcastImageToFileStateProcessor;
 
@@ -20,23 +21,34 @@ use App\State\BroadcastImageToFileStateProcessor;
         ),
         new GetCollection(
             paginationEnabled: false,
+            provider: BroadcastImageStateProvider::class,
         )
     ]
 )]
 class BroadcastImageResource
 {
-    private int $id;
+    private int $broadcastId;
 
     private string $image;
 
-    public function getId(): int
+    /**
+     * @param int $broadcastId
+     * @param string $image
+     */
+    public function __construct(int $broadcastId, string $image)
     {
-        return $this->id;
+        $this->broadcastId = $broadcastId;
+        $this->image = $image;
     }
 
-    public function setId(int $id): void
+    public function getBroadcastId(): int
     {
-        $this->id = $id;
+        return $this->broadcastId;
+    }
+
+    public function setBroadcastId(int $broadcastId): void
+    {
+        $this->broadcastId = $broadcastId;
     }
 
     public function getImage(): string

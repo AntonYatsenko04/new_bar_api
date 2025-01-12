@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\ApiResource\Broadcast\BroadcastImageResource;
 use App\Entity\BroadcastImageToDbEntity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -21,13 +22,12 @@ class BroadcastImageToDbEntityRepository extends ServiceEntityRepository
     {
         $entityManager = $this->getEntityManager();
 
-
         $entity = new BroadcastImageToDbEntity();
         $entity->setBroadcastId($broadcastId);
         $entity->setImage(base64_decode($base64Image));
 
         $this->removeExistingImages($broadcastId);
-        
+
         $entityManager->persist($entity);
         $entityManager->flush();
     }
@@ -41,7 +41,6 @@ class BroadcastImageToDbEntityRepository extends ServiceEntityRepository
             $entityManager->remove($existingDbEntity);
         }
 
-
         $entityManager->flush();
     }
 
@@ -51,11 +50,16 @@ class BroadcastImageToDbEntityRepository extends ServiceEntityRepository
         $result = [];
 
         foreach ($images as $image) {
-            $result[] = [
-                'id' => $image->getId(),
-                'broadcastId' => $image->getBroadcastId(),
-                'image' => base64_encode($image->getImage()),
-            ];
+            $imageResource = $image->getImage();
+            if (is_resource($imageResource)) {
+                $imageResource = stream_get_contents($imageResource);
+            }
+
+            $result[] =
+                new BroadcastImageResource(broadcastId: $image->getBroadcastId(),
+                    image: base64_encode(
+                        $imageResource),
+                );
         }
 
         return $result;

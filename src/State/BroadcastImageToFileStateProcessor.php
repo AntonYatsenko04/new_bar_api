@@ -31,11 +31,11 @@ class BroadcastImageToFileStateProcessor implements ProcessorInterface
         if ($data instanceof BroadcastImageResource) {
             try {
                 $this->broadcastImageToFileEntityRepository->saveBase64ImageToFile
-                (broadcastId: $data->getId(), base64Image: $data->getImage());
+                (broadcastId: $data->getBroadcastId(), base64Image: $data->getImage());
                 $this->broadcastImageToDbEntityRepository
-                    ->removeExistingImages(broadcastId: $data->getId());
+                    ->removeExistingImages(broadcastId: $data->getBroadcastId());
             } catch (Exception $exception) {
-                throw HttpException::fromStatusCode(500);
+                throw HttpException::fromStatusCode(500, $exception->getMessage());
             }
         }
     }
