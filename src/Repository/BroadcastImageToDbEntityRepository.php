@@ -13,6 +13,8 @@ use Doctrine\Persistence\ManagerRegistry;
 class BroadcastImageToDbEntityRepository extends ServiceEntityRepository
 {
 
+    private const JPEG_MAGIC_BYTES = ["\xFF\xD8\xFF"];
+    
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, BroadcastImageToDbEntity::class);

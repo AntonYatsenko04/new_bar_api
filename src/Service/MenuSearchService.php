@@ -33,7 +33,7 @@ class MenuSearchService
      * @param String $searchString
      */
     public function setData(array           $menuItems, array $orderItems,
-                            CriteriaWeights $criteriaWeights, UserRole $userRole, int $userId, string $searchString)
+                            CriteriaWeights $criteriaWeights, UserRole $userRole, int $userId, string $searchString): void
     {
         $this->menuItems = $menuItems;
         $this->orderItems = $orderItems;

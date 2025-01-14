@@ -88,6 +88,10 @@ class BroadcastImageToFileEntityRepository extends ServiceEntityRepository
                 continue;
             }
 
+            if (filesize($filePath) > 1073741824) {
+                continue;
+            }
+
             $result[] = new BroadcastImageResource(
                 broadcastId: $image->getBroadcastId(),
                 image: base64_encode(file_get_contents($filePath)),

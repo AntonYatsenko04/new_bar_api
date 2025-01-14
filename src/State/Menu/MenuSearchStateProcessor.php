@@ -45,23 +45,32 @@ class MenuSearchStateProcessor implements ProcessorInterface
      */
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): array
     {
-        if (get_class($data) === MenuSearchDTO::class) {
-            $menuItems = $this->menuEntityRepository->getAllMenuItems();
-            $userDto = $this->userInfoStateProcessor->findUserByToken
-            ($data->getToken());
-            $criteriaWeights = $this->criteriaWeightsRepository->findAll()[0];
+        try {
+            if (get_class($data) === MenuSearchDTO::class) {
+                $menuItems = $this->menuEntityRepository->getAllMenuItems();
+                $userDto = $this->userInfoStateProcessor->findUserByToken
+                ($data->getToken());
 
-            if (!isset($userDto)) {
-                throw HttpException::fromStatusCode(401);
+                if (!isset($userDto)) {
+                    throw HttpException::fromStatusCode(401);
+                }
+
+                $criteriaWeights = $this->criteriaWeightsRepository->findAll()[0];
+                $this->menuSearchService->setData(menuItems: $menuItems,
+                    orderItems: $this->orderEntityRepository->findAll(),
+                    criteriaWeights: $criteriaWeights, userRole: UserRole::from
+                    ($userDto->getUserType()), userId: $userDto->getId(), searchString: $data->getSearchRequest());
+
+                return ($this->menuSearchService->search());
             }
 
-            $this->menuSearchService->setData(menuItems: $menuItems,
-                orderItems: $this->orderEntityRepository->findAll(),
-                criteriaWeights: $criteriaWeights, userRole: UserRole::from
-                ($userDto->getUserType()), userId: $userDto->getId(), searchString: $data->getSearchRequest());
-
-            return ($this->menuSearchService->search());
+            return array();
+        } catch (HttpException $e) {
+            throw $e;
+        } catch (\Exception $exception) {
+            throw HttpException::fromStatusCode(500);
         }
+
 
     }
 }
