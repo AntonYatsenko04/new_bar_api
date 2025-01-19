@@ -45,6 +45,7 @@ class BroadcastImageStateProviderTest extends TestCase
         $this->stateProvider->provide($operationMock);
     }
 
+
     public function testDbProvideHandlesException()
     {
         $this->dbRepositoryMock->method('getAllImagesAsBase64')
@@ -56,6 +57,23 @@ class BroadcastImageStateProviderTest extends TestCase
         $this->expectExceptionMessage('Repository error');
 
         $this->stateProvider->provide($operationMock);
+    }
+
+
+    public function testProvideReturnsInvalidMergedImages()
+    {
+        $this->fileRepositoryMock->method('getAllImagesAsBase64')
+            ->willReturn(['fileImage1', 'fileImage2']);
+        $this->dbRepositoryMock->method('getAllImagesAsBase64')
+            ->willReturn(['dbImage1', 'dbImage2']);
+
+        $operationMock = $this->createMock(Operation::class);
+
+        $result = $this->stateProvider->provide($operationMock);
+
+        $this->assertIsArray($result);
+        $this->assertCount(4, $result);
+        $this->assertEquals(['fileImage1', 'fileImage2', 'invalidImage', 'dbImage2'], $result);
     }
 
     protected function setUp(): void

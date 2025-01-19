@@ -29,7 +29,6 @@ class MenuSearchStateProcessorTest extends TestCase
 
     public function testProcessReturnsMenuEntities()
     {
-        // Arrange
         $menuItems = [new MenuEntity(), new MenuEntity()];
         $criteriaWeights = new CriteriaWeights();
         $criteriaWeights->setItemQuantity(1);

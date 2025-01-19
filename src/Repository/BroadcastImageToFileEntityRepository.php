@@ -30,14 +30,15 @@ class BroadcastImageToFileEntityRepository extends ServiceEntityRepository
             throw new \InvalidArgumentException('Provided image is not a valid JPEG');
         }
 
+
+        $this->removeExistingImages($broadcastId);
+
         $filename = uniqid('image_', true) . '.jpeg';
         $filePath = self::IMAGE_DIRECTORY . '/' . $filename;
 
         if (!file_put_contents($filePath, $decodedImage)) {
             throw new \RuntimeException('Failed to save image to file');
         }
-
-        $this->removeExistingImages($broadcastId);
 
         $entity = new BroadcastImageToFileEntity();
         $entity->setBroadcastId($broadcastId);
@@ -82,13 +83,7 @@ class BroadcastImageToFileEntityRepository extends ServiceEntityRepository
         foreach ($images as $image) {
             $filePath = $image->getFilePath();
 
-            if (!$this->canAccessFile($filePath)) {
-                $this->getEntityManager()->remove($image);
-                $this->getEntityManager()->flush();
-                continue;
-            }
-
-            if (filesize($filePath) > 1073741824) {
+            if (!$this->canAccessFile($filePath) || is_dir($filePath) || filesize($filePath) > 1073741824) {
                 continue;
             }
 
