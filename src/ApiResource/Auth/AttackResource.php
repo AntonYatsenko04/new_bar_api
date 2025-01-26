@@ -2,13 +2,14 @@
 
 namespace App\ApiResource\Auth;
 
+
 use ApiPlatform\Metadata\Post;
-use App\State\Auth\SignInStateProcessor;
+use App\State\AttackProcessor;
 use Symfony\Component\Validator\Constraints as Assert;
 
 
-#[Post(uriTemplate: 'sign_in', output: TokenDTO::class, processor: SignInStateProcessor::class)]
-class SignInApiResource
+#[Post(uriTemplate: 'attack', output: TokenDTO::class, processor: AttackProcessor::class)]
+class AttackResource
 {
 
     #[Assert\NotBlank]

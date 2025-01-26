@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\ApiResource\Auth\SignInApiResource;
 use App\ApiResource\Auth\TokenDTO;
+use App\Repository\CSRFTokenRepository;
 use App\Repository\User\CookEntityRepository;
 use App\Repository\User\ManagerEntityRepository;
 use App\Repository\User\WaiterEntityRepository;
@@ -16,22 +17,30 @@ class SignInStateProcessor implements ProcessorInterface
     private ManagerEntityRepository $managerEntityRepository;
     private WaiterEntityRepository $waiterEntityRepository;
     private CookEntityRepository $cookEntityRepository;
+    private CSRFTokenRepository $CSRFTokenRepository;
 
     /**
      * @param ManagerEntityRepository $managerEntityRepository
      * @param WaiterEntityRepository $waiterEntityRepository
      * @param CookEntityRepository $cookEntityRepository
+     * @param CSRFTokenRepository $CSRFTokenRepository
      */
-    public function __construct(ManagerEntityRepository $managerEntityRepository, WaiterEntityRepository $waiterEntityRepository, CookEntityRepository $cookEntityRepository)
+    public function __construct(ManagerEntityRepository $managerEntityRepository, WaiterEntityRepository $waiterEntityRepository, CookEntityRepository $cookEntityRepository, CSRFTokenRepository $CSRFTokenRepository)
     {
         $this->managerEntityRepository = $managerEntityRepository;
         $this->waiterEntityRepository = $waiterEntityRepository;
         $this->cookEntityRepository = $cookEntityRepository;
+        $this->CSRFTokenRepository = $CSRFTokenRepository;
     }
+
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): ?TokenDTO
     {
         if (get_class($data) === SignInApiResource::class) {
+            if ($data->getCsrfToken() !== $this->CSRFTokenRepository->find(1)
+                    ->getToken()) {
+                throw HttpException::fromStatusCode(403);
+            }
             $repositories = array(
                 $this->managerEntityRepository,
                 $this->waiterEntityRepository,
@@ -40,8 +49,8 @@ class SignInStateProcessor implements ProcessorInterface
 
             foreach ($repositories as $repository) {
                 $token = $repository->getTokenByEmailAndPassword
-                ($data->getEmail(),$data->getPassword());
-                if(isset($token)){
+                ($data->getEmail(), $data->getPassword());
+                if (isset($token)) {
                     return new TokenDTO(token: $token);
                 }
             }
